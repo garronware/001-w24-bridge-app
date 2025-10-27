@@ -23,18 +23,21 @@ CORS(app, origins="*") # Enable CORS for n8n
 async def analyze_drawing(file_bytes: bytes) -> list:
     """Analyzes a drawing file with the Werk24 API and returns the results."""
     logger.info("Starting drawing analysis with Werk24.")
-
+    
     # Define which data to extract
     asks = [AskMetaData(), AskFeatures(), AskInsights()]
 
     async with Werk24Client() as client:
-        # Use a list comprehension for a more concise way to gather results
+        # This list comprehension now checks if the payload is a full data object
+        # before trying to process it. This will filter out simple messages
+        # like 'sheet_id' and prevent the crash.
         results = [
-            message.payload_dict
+            message.payload_dict.model_dump()
             async for message in client.read_drawing(drawing=file_bytes, asks=asks)
-            if message.message_type == TechreadMessageType.ASK and message.payload_dict
+            if (message.message_type == TechreadMessageType.ASK 
+                and hasattr(message.payload_dict, 'model_dump'))
         ]
-
+    
     logger.info(f"Analysis complete. Found {len(results)} result sets.")
     return results
 
