@@ -10,8 +10,7 @@ from werk24 import (
     AskMetaData,
     AskFeatures,
     AskInsights,
-    TechreadMessageType,
-    TechreadException
+    TechreadMessageType
 )
 
 # --- Basic Setup ---
@@ -31,7 +30,7 @@ async def analyze_drawing(file_bytes: bytes) -> list:
     async with Werk24Client() as client:
         # Use a list comprehension for a more concise way to gather results
         results = [
-            message.payload_dict.model_dump()
+            message.payload_dict
             async for message in client.read_drawing(drawing=file_bytes, asks=asks)
             if message.message_type == TechreadMessageType.ASK and message.payload_dict
         ]
@@ -83,9 +82,6 @@ def process_drawing_endpoint():
         }
         return jsonify(response_data), 200
 
-    except TechreadException as e:
-        logger.error(f"A Werk24 API error occurred: {e}")
-        return jsonify({"success": False, "error": "Werk24 API Error", "details": str(e)}), 500
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}", exc_info=True)
         return jsonify({"success": False, "error": "An unexpected error occurred", "details": str(e)}), 500
